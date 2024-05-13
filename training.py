@@ -46,6 +46,7 @@ lora_config = LoraConfig(
 
 # Ensure that packages can be found
 import sys
+import torch.nn.DataParallel
 sys.path.insert(0, f"/home/{NET_ID}/.local/lib/python3.12/site-packages")
 
 # Ensure that GPU can be found
