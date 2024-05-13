@@ -496,9 +496,10 @@ def train(model, device, data_dict, start_epoch=1, start_iteration_number=0):
             if index%config["SAMPLING_INTERVAL"]==0:
                 generated_text = inference(model, tokenizer, device)
                 logging.info(f"Text:\n{generated_text}")
-                
+
+                gpu_count = torch.cuda.device_count()
                 with open(f"{log_save_path}/training.log", "a") as f:
-                    f.write(f"{epoch}\t{index}\t{avg_loss}\t{generated_text}\n")
+                    f.write(f"{epoch}\t{index}\t{avg_loss}\t{gpu_count}\t{generated_text}\n")
 
             #Save the model at each checkpointing interval
             if index%config["CHECKPOINTING_INTERVAL"]==0:
