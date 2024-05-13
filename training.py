@@ -392,17 +392,17 @@ def generate(model, inputs):
     
 def inference(model, tokenizer, device, quantized=config["PEFT"]):
     # Put the model in eval mode and enable caching
-    model.config.use_cache = True
-    model.eval()
+    model.module.config.use_cache = True
+    model.module.eval()
     
     inputs = tokenizer(tokenizer.eos_token+"This is", return_tensors="pt").to(device)
     # Generate a sequence of text tokens
     with torch.no_grad():
         if quantized:
             with torch.cuda.amp.autocast():
-                output_sequence = generate(model, inputs)
+                output_sequence = generate(model.module, inputs)
         else:
-            output_sequence = generate(model, inputs)
+            output_sequence = generate(model.module, inputs)
         
 
     # Decode the tokens to text
@@ -410,8 +410,8 @@ def inference(model, tokenizer, device, quantized=config["PEFT"]):
                                       skip_special_tokens=True).replace('\n', '').replace('\t', ' ')
 
     # Put the model back into train mode and disable caching
-    model.train()
-    model.config.use_cache = False
+    model.module.train()
+    model.module.config.use_cache = False
     
     return generated_text
 
@@ -503,7 +503,7 @@ def train(model, device, data_dict, start_epoch=1, start_iteration_number=0):
                 logging.info(f"Checkpointing model at epoch={epoch} and batch={index}\n")
 
                 checkpointing_path = f"{model_save_path}_{epoch}_{index}"
-                model.save_pretrained(checkpointing_path)
+                model.module.save_pretrained(checkpointing_path)
                 tokenizer.save_pretrained(checkpointing_path)
 
             #Validate the model at each validation interval
@@ -559,7 +559,7 @@ def train(model, device, data_dict, start_epoch=1, start_iteration_number=0):
             break
 
     #After all epochs are completed, save the final model and tokenier
-    model.save_pretrained(model_save_path)
+    model.module.save_pretrained(model_save_path)
     tokenizer.save_pretrained(model_save_path)
 
 if __name__=="__main__":
@@ -582,9 +582,8 @@ if __name__=="__main__":
         logger.info(f"Memory Memory Footprint: {model.get_memory_footprint() / 1e6:,} MB")
         logger.info(f"Model is on device: {model.device}")
     else:
-        model, device = create_or_load_model(checkpointed_path=checkpointed_path)
-#         torch._dynamo.config.verbose=True 
-#         model = torch.compile(model)
+        model, device = create_or_load_model(checkpointed_path=checkpointed_path)         
+        model = torch.nn.DataParallel(model)
 
     generated_text = inference(model, tokenizer, device)
     logging.info(f"Initial Text:\n{generated_text}")
