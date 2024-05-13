@@ -1,8 +1,8 @@
 # Change net ID here to use your scratch folder
 ENV = "prod"
 NET_ID = "sv2564"
-DATA_PATH =  f"/scratch/{NET_ID}/fine_tuning" 
-ROOT_PATH = f"/scratch/{NET_ID}/fine_tuning/{ENV}"
+DATA_PATH =  f"/scratch/{NET_ID}/project" 
+ROOT_PATH = f"/scratch/{NET_ID}/project/{ENV}"
 
 # Global configurations
 config = {
