@@ -46,6 +46,7 @@ lora_config = LoraConfig(
 
 # Ensure that packages can be found
 import sys
+import argparse
 import torch.nn.DataParallel
 sys.path.insert(0, f"/home/{NET_ID}/.local/lib/python3.12/site-packages")
 
@@ -563,7 +564,18 @@ def train(model, device, data_dict, start_epoch=1, start_iteration_number=0):
     model.module.save_pretrained(model_save_path)
     tokenizer.save_pretrained(model_save_path)
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--max_gpus", type=int, default=1, help="Maximum number of GPUs to use")
+    return parser.parse_args()
+
 if __name__=="__main__":
+
+    args = parse_args()
+    max_gpus = args.max_gpus
+    gpu_ids = list(range(max_gpus))
+    
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, gpu_ids))
     print_gpu_utilization()
     
     checkpointed_path = None
@@ -584,7 +596,7 @@ if __name__=="__main__":
         logger.info(f"Model is on device: {model.device}")
     else:
         model, device = create_or_load_model(checkpointed_path=checkpointed_path)         
-        model = torch.nn.DataParallel(model)
+        model = torch.nn.DataParallel(model, device_ids=gpu_ids)
 
     generated_text = inference(model, tokenizer, device)
     logging.info(f"Initial Text:\n{generated_text}")
